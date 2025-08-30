@@ -20,7 +20,7 @@ if __name__ == "__main__":
     ITER_2.left_river.add("wolf")
 
     parsed = p.parse_args(sys.argv[1::])
-    if (parsed.algorithm == "BFS"):
+    if (parsed.algorithm.upper() == "BFS"):
         b = BFS()
         p = b.MAIN(ITER_1)
         print(p)
@@ -29,7 +29,7 @@ if __name__ == "__main__":
         p = b.MAIN(ITER_2)
         print(p)
         print_solution_path(ITER_2, p.solution_path)
-    elif (parsed.algorithm == "IDS"):
+    elif (parsed.algorithm.upper() == "IDS"):
         d = IDS()
         p = d.MAIN(ITER_1, 10)
         print(p)
