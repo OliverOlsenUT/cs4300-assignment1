@@ -1,11 +1,12 @@
 import copy
-class BFSNode():
+class Node():
     def __init__(self):
         self.left_river = set()
         self.right_river = set()
         self.prev_actions = []
+        self.depth = 0
     def __eq__(self, other):
-        other : BFSNode
+        other : Node
         return self.left_river == other.left_river and self.right_river == other.right_river
     def transition(self, a):
         pass
@@ -41,7 +42,7 @@ class BFSNode():
 class BFS():
     def __init__(self):
         self.queue = []
-        self.goal = BFSNode()
+        self.goal = Node()
         self.goal.right_river.add("farmer")
         self.goal.right_river.add("goat")
         self.goal.right_river.add("cabbage")
@@ -68,9 +69,48 @@ class BFS():
                     self.ENQUEUE(s_)
         return "fail"
     
+class DLS():
+    def __init__(self):
+        self.queue = []
+        self.goal = Node()
+        self.goal.right_river.add("farmer")
+        self.goal.right_river.add("goat")
+        self.goal.right_river.add("cabbage")
+        self.goal.right_river.add("wolf")
+    def PUSH(self, item):
+        self.queue.append(item)
+    def POP(self):
+        return self.queue.pop()
+    def GOAL_TEST(self, n):
+        return n == self.goal
+    def MAIN(self, s0, L):
+        self.queue = []
+        self.PUSH(s0)
+        cutoff = False
+        while self.queue:
+            n = self.POP()
+            if self.GOAL_TEST(n):
+                return n
+            if n.depth == L:
+                cutoff = True
+                continue
+            A = n.actions()
+            for a in A[::-1]:
+                s_ = TRANSITION(n, a)
+                s_.depth += 1
+                self.PUSH(s_)
+        return "CUTOFF" if cutoff else "FAIL"
+    
+class IDS(DLS):
+    def MAIN(self, s0, max_depth):
+        for x in range(max_depth):
+            r = super().MAIN(s0, x)
+            if type(r) != str:
+                return r
+        return "fail"
 def TRANSITION(n, a):
     n_ = copy.deepcopy(n)
-    n_ : BFSNode
+    n_ : Node
     if "farmer" in n_.left_river:
         if a and a in n_.left_river:
             n_.left_river.remove(a)
@@ -99,17 +139,34 @@ def print_solution_path(inital_state, actions_to_sol):
 
 if __name__ == "__main__":
     b = BFS()
-    s0 = BFSNode()
+    s0 = Node()
     s0.left_river.add("farmer")
     s0.left_river.add("goat")
     s0.left_river.add("cabbage")
     s0.left_river.add("wolf")
     p = b.MAIN(s0)
     print_solution_path(s0, p.prev_actions)
-    s0 = BFSNode()
+    b = BFS()
+    s0 = Node()
     s0.right_river.add("farmer")
     s0.right_river.add("goat")
     s0.left_river.add("cabbage")
     s0.left_river.add("wolf")
     p = b.MAIN(s0)
+    print_solution_path(s0, p.prev_actions)
+    d = IDS()
+    s0 = Node()
+    s0.left_river.add("farmer")
+    s0.left_river.add("goat")
+    s0.left_river.add("cabbage")
+    s0.left_river.add("wolf")
+    p = d.MAIN(s0, 20)
+    print_solution_path(s0, p.prev_actions)
+    d = IDS()
+    s0 = Node()
+    s0.right_river.add("farmer")
+    s0.right_river.add("goat")
+    s0.left_river.add("cabbage")
+    s0.left_river.add("wolf")
+    p = d.MAIN(s0, 20)
     print_solution_path(s0, p.prev_actions)
