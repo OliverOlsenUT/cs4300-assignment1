@@ -37,7 +37,7 @@ class BFSNode():
         actions.remove("farmer")
         return actions
     def __str__(self):
-        return str(self.left_river) + ", " + str(self.right_river) + ", " + str(self.prev_actions)
+        return str(self.left_river) + " " + str(self.right_river)
 class BFS():
     def __init__(self):
         self.queue = []
@@ -53,23 +53,6 @@ class BFS():
         return self.queue.pop()
     def GOAL_TEST(self, n):
         return n == self.goal
-    def TRANSITION(self, n, a):
-        n_ = copy.deepcopy(n)
-        n_ : BFSNode
-        if "farmer" in n_.left_river:
-            if a and a in n_.left_river:
-                n_.left_river.remove(a)
-                n_.right_river.add(a)
-            n_.left_river.remove("farmer")
-            n_.right_river.add("farmer")
-        elif "farmer" in n_.right_river:
-            if a and a in n_.right_river:
-                n_.right_river.remove(a)
-                n_.left_river.add(a)
-            n_.right_river.remove("farmer")
-            n_.left_river.add("farmer")
-        n_.prev_actions.append(a)
-        return n_
     def MAIN(self, s0):
         self.queue = []
         self.ENQUEUE(s0)
@@ -80,10 +63,39 @@ class BFS():
                 return n
             self.explored.append(n)
             for a in n.actions():
-                s_ = self.TRANSITION(n, a)
+                s_ = TRANSITION(n, a)
                 if s_ not in self.queue and s_ not in self.explored:
                     self.ENQUEUE(s_)
         return "fail"
+    
+def TRANSITION(n, a):
+    n_ = copy.deepcopy(n)
+    n_ : BFSNode
+    if "farmer" in n_.left_river:
+        if a and a in n_.left_river:
+            n_.left_river.remove(a)
+            n_.right_river.add(a)
+        n_.left_river.remove("farmer")
+        n_.right_river.add("farmer")
+    elif "farmer" in n_.right_river:
+        if a and a in n_.right_river:
+            n_.right_river.remove(a)
+            n_.left_river.add(a)
+        n_.right_river.remove("farmer")
+        n_.left_river.add("farmer")
+    n_.prev_actions.append(a)
+    return n_
+
+def print_solution_path(inital_state, actions_to_sol):
+    s = copy.deepcopy(inital_state)
+    print("Initial State:", s)
+    for x in actions_to_sol:
+        s = TRANSITION(s, x)
+        if x:
+            print("The farmer moved with", x, "to the other side. New state:", s)
+        else:
+            print("The farmer moved to the other side. New state:", s)
+    print("Reached goal state.")
 
 if __name__ == "__main__":
     b = BFS()
@@ -92,10 +104,12 @@ if __name__ == "__main__":
     s0.left_river.add("goat")
     s0.left_river.add("cabbage")
     s0.left_river.add("wolf")
-    print(b.MAIN(s0)) 
+    p = b.MAIN(s0)
+    print_solution_path(s0, p.prev_actions)
     s0 = BFSNode()
     s0.right_river.add("farmer")
     s0.right_river.add("goat")
     s0.left_river.add("cabbage")
     s0.left_river.add("wolf")
-    print(b.MAIN(s0)) 
+    p = b.MAIN(s0)
+    print_solution_path(s0, p.prev_actions)
