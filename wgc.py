@@ -1,4 +1,19 @@
 import copy
+
+class Result():
+    def __init__(self):
+        self.nodes_generated = 0
+        self.nodes_expanded = 0
+        self.maximum_frontier_size = 0
+        self.solution_depth = 0
+        self.solution_cost = 0
+        self.solution_path = []
+        self.type = ""
+    def __str__(self):
+        return f"Result Type: {self.type} \
+                \nNodes Generated: {self.nodes_generated} | Nodes Expanded: {self.nodes_expanded} | Max Frontier Size: {self.maximum_frontier_size} \
+                \nSolution Depth: {self.solution_depth} | Solution Cost: {self.solution_cost} | Solution Path: {self.solution_path}"
+
 class Node():
     def __init__(self):
         self.left_river = set()
@@ -48,26 +63,39 @@ class BFS():
         self.goal.right_river.add("cabbage")
         self.goal.right_river.add("wolf")
         self.explored = set()
+        self.r = Result()
     def ENQUEUE(self, item):
         self.queue.append(item)
+        self.r.nodes_generated += 1
+        if len(self.queue) > self.r.maximum_frontier_size:
+            self.r.maximum_frontier_size = len(self.queue)
     def DEQUEUE(self):
         return self.queue.pop()
     def GOAL_TEST(self, n):
         return n == self.goal
-    def MAIN(self, s0):
+    def MAIN(self, s0) -> Result:
+        self.r = Result()
         self.queue = []
         self.ENQUEUE(s0)
         self.explored = []
         while self.queue:
             n = self.DEQUEUE()
             if self.GOAL_TEST(n):
-                return n
+                n : Node
+                self.r.solution_path = n.prev_actions
+                self.r.solution_cost = len(n.prev_actions)
+                self.r.solution_depth = n.depth
+                self.r.type = "WIN"
+                return self.r
             self.explored.append(n)
+            self.r.nodes_expanded += 1
             for a in n.actions():
                 s_ = TRANSITION(n, a)
                 if s_ not in self.queue and s_ not in self.explored:
                     self.ENQUEUE(s_)
-        return "fail"
+                    s_.depth += 1
+        self.r.type = "FAIL"
+        return self.r
     
 class DLS():
     def __init__(self):
@@ -77,37 +105,50 @@ class DLS():
         self.goal.right_river.add("goat")
         self.goal.right_river.add("cabbage")
         self.goal.right_river.add("wolf")
+        self.r = Result()
     def PUSH(self, item):
         self.queue.append(item)
+        self.r.nodes_generated += 1
+        if len(self.queue) > self.r.maximum_frontier_size:
+            self.r.maximum_frontier_size = len(self.queue)
     def POP(self):
         return self.queue.pop()
     def GOAL_TEST(self, n):
         return n == self.goal
-    def MAIN(self, s0, L):
+    def MAIN(self, s0, L) -> Result:
+        self.r = Result()
         self.queue = []
         self.PUSH(s0)
         cutoff = False
         while self.queue:
             n = self.POP()
             if self.GOAL_TEST(n):
-                return n
+                self.r.solution_path = n.prev_actions
+                self.r.solution_cost = len(n.prev_actions)
+                self.r.solution_depth = n.depth
+                self.r.type = "WIN"
+                return self.r
             if n.depth == L:
                 cutoff = True
                 continue
+            self.r.nodes_expanded += 1
             A = n.actions()
             for a in A[::-1]:
                 s_ = TRANSITION(n, a)
                 s_.depth += 1
                 self.PUSH(s_)
-        return "CUTOFF" if cutoff else "FAIL"
+        self.r.type = "CUTOFF" if cutoff else "FAIL"
+        return self.r
     
 class IDS(DLS):
     def MAIN(self, s0, max_depth):
         for x in range(max_depth):
             r = super().MAIN(s0, x)
-            if type(r) != str:
+            if r.type == "WIN" or r.type == "FAIL":
                 return r
-        return "fail"
+        r = Result()
+        r.type = "FAIL"
+        return r
 def TRANSITION(n, a):
     n_ = copy.deepcopy(n)
     n_ : Node
@@ -129,6 +170,7 @@ def TRANSITION(n, a):
 def print_solution_path(inital_state, actions_to_sol):
     s = copy.deepcopy(inital_state)
     print("Initial State:", s)
+    print("Solution Steps:")
     for x in actions_to_sol:
         s = TRANSITION(s, x)
         if x:
@@ -136,37 +178,3 @@ def print_solution_path(inital_state, actions_to_sol):
         else:
             print("The farmer moved to the other side. New state:", s)
     print("Reached goal state.")
-
-if __name__ == "__main__":
-    b = BFS()
-    s0 = Node()
-    s0.left_river.add("farmer")
-    s0.left_river.add("goat")
-    s0.left_river.add("cabbage")
-    s0.left_river.add("wolf")
-    p = b.MAIN(s0)
-    print_solution_path(s0, p.prev_actions)
-    b = BFS()
-    s0 = Node()
-    s0.right_river.add("farmer")
-    s0.right_river.add("goat")
-    s0.left_river.add("cabbage")
-    s0.left_river.add("wolf")
-    p = b.MAIN(s0)
-    print_solution_path(s0, p.prev_actions)
-    d = IDS()
-    s0 = Node()
-    s0.left_river.add("farmer")
-    s0.left_river.add("goat")
-    s0.left_river.add("cabbage")
-    s0.left_river.add("wolf")
-    p = d.MAIN(s0, 20)
-    print_solution_path(s0, p.prev_actions)
-    d = IDS()
-    s0 = Node()
-    s0.right_river.add("farmer")
-    s0.right_river.add("goat")
-    s0.left_river.add("cabbage")
-    s0.left_river.add("wolf")
-    p = d.MAIN(s0, 20)
-    print_solution_path(s0, p.prev_actions)
